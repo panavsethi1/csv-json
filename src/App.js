@@ -69,7 +69,7 @@ function App() {
         </button>
         {jsonString === "[]" ? null : (
           <div>
-            <h4>Your data in JSON:</h4>
+            <h4>Your data in JSON string:</h4>
             <p>{jsonString}</p>
           </div>
         )}
