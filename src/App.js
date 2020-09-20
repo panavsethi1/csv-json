@@ -1,16 +1,28 @@
 import React, { useState } from "react";
 import "./App.css";
 import XLSX from "xlsx";
-import CsvDownload from "react-json-to-csv";
+import jsonexport from "jsonexport/dist";
+import csvtojson from "csvtojson";
+import flat from "flat";
 
 console.log(XLSX);
 
 function App() {
   const [excelToJson, setExcelToJson] = useState([]);
   const [jsonToExcel, setJsonToExcel] = useState();
-  const [csvName, setCsvName] = useState("");
   let inputJson;
   let selectedFile;
+
+  function exportData(filename, data) {
+    var mimeType = "text/plain";
+    var link = document.createElement("a");
+    link.setAttribute("download", filename);
+    link.setAttribute(
+      "href",
+      "data:" + mimeType + ";charset=utf-8," + encodeURIComponent(data)
+    );
+    link.click();
+  }
 
   const handleFileUpload = (event) => {
     selectedFile = event.target.files[0];
@@ -18,17 +30,27 @@ function App() {
 
   const handleFileConvert = (event) => {
     if (selectedFile) {
+      let filename = String(selectedFile.name);
+      let ext = Number(filename.indexOf("."));
       let fileReader = new FileReader();
       fileReader.readAsBinaryString(selectedFile);
       fileReader.onload = (event) => {
         let data = event.target.result;
-        let workbook = XLSX.read(data, { type: "binary" });
-        workbook.SheetNames.forEach((sheet) => {
-          setExcelToJson((prev) => [
-            ...prev,
-            XLSX.utils.sheet_to_json(workbook.Sheets[sheet]),
-          ]);
-        });
+        // let workbook = XLSX.read(data, { type: "binary" });
+        // workbook.SheetNames.forEach((sheet) => {
+        //   setExcelToJson((prev) => [
+        //     ...prev,
+        //     XLSX.utils.sheet_to_json(workbook.Sheets[sheet]),
+        //   ]);
+        // });
+        csvtojson({ flatKeys: true })
+          .fromString(data)
+          .then((json) => {
+            exportData(
+              `${filename.substring(0, ext)}.json`,
+              JSON.stringify(json)
+            );
+          });
       };
     }
   };
@@ -41,16 +63,45 @@ function App() {
     if (inputJson) {
       let inputJsonName = String(inputJson.name);
       let ext = Number(inputJsonName.indexOf("."));
-      setCsvName(`${inputJsonName.substring(0, ext)}.csv`);
       let fileReader = new FileReader();
       fileReader.readAsBinaryString(inputJson);
       fileReader.onload = (event) => {
-        setJsonToExcel(JSON.parse(event.target.result));
+        let json = JSON.parse(event.target.result);
+
+        // let json = flatten(JSON.parse(event.target.result));
+        // const jsonArray = Object.entries(json).map((ent) => {
+        //   return [ent[0], String(ent[1])];
+        // });
+        // setJsonToExcel(Object.fromEntries(jsonArray));
+        // Axios.post("https://json-csv.com/api/getcsv", {
+        //   email: "panav.sethi.delhi@gmail.com",
+        //   json: json,
+        // }).then((resp) => {
+        //   console.log(resp);
+        // });
+        // const csv = parse(json, {
+        //   excelStrings: true,
+        // });
+        // setJsonToExcel(csv);
+        // exportData(`${inputJsonName.substring(0, ext)}.csv`, csv);
+        Array.isArray(json)
+          ? jsonexport(json, { fillTopRow: true }, function (err, csv) {
+              if (err) {
+                return console.error(err);
+              }
+              exportData(`${inputJsonName.substring(0, ext)}.csv`, csv);
+            })
+          : jsonexport([json], { fillTopRow: true }, function (err, csv) {
+              if (err) {
+                return console.error(err);
+              }
+              exportData(`${inputJsonName.substring(0, ext)}.csv`, csv);
+            });
       };
     }
   };
   if (jsonToExcel) {
-    console.log(Array.isArray(jsonToExcel));
+    console.log(jsonToExcel);
   }
   const jsonString = JSON.stringify(excelToJson);
   return (
@@ -85,7 +136,7 @@ function App() {
         </button>{" "}
         <br />
         <br />
-        {jsonToExcel !== undefined ? (
+        {/* {jsonToExcel !== undefined ? (
           Array.isArray(jsonToExcel) ? (
             <CsvDownload data={jsonToExcel} filename={csvName}>
               Download File
@@ -95,10 +146,30 @@ function App() {
               Download File
             </CsvDownload>
           )
-        ) : null}
+        ) : null} */}
       </div>
     </div>
   );
 }
 
 export default App;
+
+//  function exportData(filename, data) {
+//         mimeType = 'text/plain';
+//         var link = document.createElement('a');
+//         link.setAttribute('download', filename);
+//         link.setAttribute('href', 'data:' + mimeType + ';charset=utf-8,' + encodeURIComponent(data));
+//         link.click();
+//     }\
+// function exportData(filename, data) {
+//   mimeType = "text/plain";
+//   var link = document.createElement("a");
+//   link.setAttribute("download", filename);
+//   link.setAttribute(
+//     "href",
+//     "data:" + mimeType + ";charset=utf-8," + encodeURIComponent(data)
+//   );
+//   link.click();
+// }
+
+// exportData("test.csv", "sadhfasfdjaskjfd,las")
