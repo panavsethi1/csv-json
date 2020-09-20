@@ -107,7 +107,7 @@ function App() {
   return (
     <div className="App">
       <div className="container" style={{ textAlign: "center" }}>
-        <h3>Excel to JSON</h3>
+        <h3>CSV to JSON</h3>
         <input
           id="xlsFile"
           className="form-group"
@@ -124,7 +124,7 @@ function App() {
             <p>{jsonString}</p>
           </div>
         )}
-        <h3>JSON to Excel</h3>
+        <h3>JSON to CSV</h3>
         <input
           className="form-group"
           onChange={handleJsonChange}
